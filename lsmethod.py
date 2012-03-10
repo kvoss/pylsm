@@ -252,6 +252,8 @@ def simple_solver(f, t0, t, args):
     solns = np.array([t0])
     for tx in t:
         fi += delta_t * f(fi, tx,img,K_img,squared_eliminator)
+        # here we should have information if we should save further
+        # results, otherwise we are just wasting space
         solns = np.vstack((solns,fi))
     return solns
 
@@ -289,12 +291,19 @@ def segment(oimg):
     slns = solve_ode(f, t0, t, args=(img,K_img,squared_eliminator))
     return slns
 
-def save_segmentation(fn):
+def load_file(fn):
     abs_fname = os.path.abspath(fn)
     dn, fname = os.path.split(abs_fname)
+    return plt.imread(abs_fname)
+
+def save_segmentation(fn):
+    # TODO: I feel like this sunction is too big
+    # It should be splited into part for readin the file in and then
+    # it should be segmented, then do save. This would be way more
+    # natural.
     log.info("segmenting file: " + fname)
 
-    cellImg = plt.imread(abs_fname)
+    cellImg = load_file(fn)
     slns = segment(cellImg)
 
     fname_tmp = '_'.join([fname,init_sdf_mthd,'ups'+str(upsilon),'T'+str(t_f),'eta'+str(eta),'eps'+str(epsilon)])
