@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# based on an example from:
+# http://www.gimp.org/docs/python/index.html
+
 import math
 from gimpfu import *
 
