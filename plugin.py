@@ -10,7 +10,7 @@ import lsmethod.segment as lsm
 import lsmethod.load_file as load_file
 
 def python_lsm(timg, tdrawable,
-                ):
+               upsilon, mu, eta, t_f, time_step, mask_size ):
     width = tdrawable.width
     height = tdrawable.height
 
@@ -81,9 +81,12 @@ register(
         "<Image>/Filters/Biology/_LSMSegmentation...",
         "RGB*, GRAY*",
         [
-                (PF_FLOAT, "time_step", "delta t", 0.1),
-                (PF_FLOAT, "time_end", "duration", 2.0),
-                (PF_INT, "mask_size", "mask size", 5)
+            (PF_FLOAT, "upsilon", "arc smoothing", 0.1),
+            (PF_FLOAT, "mu", "LS regularity", 0.1),
+            (PF_FLOAT, "eta", "cytoplasm marker", 0.0),
+            (PF_FLOAT, "t_f", "duration", 1.5)
+            (PF_FLOAT, "time_step", "delta t", 0.1),
+            (PF_INT, "mask_size", "mask size", 5)
         ],
         [],
         python_lsm)
