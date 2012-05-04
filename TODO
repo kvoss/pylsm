@@ -1,0 +1,15 @@
+= Blocker =
+* Getting the image as a matrix to the function
+
+* Showing the result in the new window
+
+= Important =
+* Speeding up calculation of e1 & e2
+
+* Refactoring towards OO
+    - i.e. solution and methods for testing one
+
+* Caching older selections
+
+= Nice =
+* Estimation of remaining time

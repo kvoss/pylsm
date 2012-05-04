@@ -1,4 +1,6 @@
-SRCS := pythonlsm.py
+SRCS := lsmcyto.py
+
+all : install
 
 install :
 	chmod +x ${SRCS}
