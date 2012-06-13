@@ -13,3 +13,7 @@
 
 = Nice =
 * Estimation of remaining time
+
+= Others =
+* separate the algorithm in the lib directory
+* create the plugin directory for the GIMP
