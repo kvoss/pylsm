@@ -7,6 +7,7 @@
 
 from gimpfu import *
 import gimp
+import numpy as np
 
 #import lsmethod.segment as segment
 #import lsmethod.load_file as load_file
@@ -30,6 +31,9 @@ def lsmcyto(image, drawable, upsilon, mu, eta, t_f, time_step, mask_size):
     image.add_layer(layer_one, 1)
 
     pdb.gimp_edit_fill(layer_one, BACKGROUND_FILL)
+
+    pr = drawable.get_pixel_rgn(0,0, width, height)
+    print np.array(pr[:,:])
 
     mylog("[!!] layer added")
 

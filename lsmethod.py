@@ -16,6 +16,9 @@ import ConfigParser
 import logging
 import os
 
+
+from files import *
+
 ##### Importing constants
 config = ConfigParser.ConfigParser()
 config.read('lsmethod.cfg')
@@ -271,6 +274,8 @@ def solve_ode(f, t0, t, args):
 def segment(oimg):
     """ Segment nucleus and cytoplasm from picture
     """
+    log.info("segmenting file: " + fname)
+
     # blending color image
     if len(oimg.shape) == 3:
         img = np.sum(oimg, 2) / oimg.shape[2]
@@ -291,47 +296,21 @@ def segment(oimg):
     slns = solve_ode(f, t0, t, args=(img,K_img,squared_eliminator))
     return slns
 
-def load_file(fn):
-    abs_fname = os.path.abspath(fn)
-    dn, fname = os.path.split(abs_fname)
-    return plt.imread(abs_fname)
 
-def save_segmentation(fn):
-    # TODO: I feel like this sunction is too big
-    # It should be splited into part for readin the file in and then
-    # it should be segmented, then do save. This would be way more
-    # natural.
-    log.info("segmenting file: " + fname)
 
-    cellImg = load_file(fn)
+def save_segmentation(fname):
+
+    cellImg = open_imfile(fname)
     slns = segment(cellImg)
 
-    fname_tmp = '_'.join([fname,init_sdf_mthd,'ups'+str(upsilon),'T'+str(t_f),'eta'+str(eta),'eps'+str(epsilon)])
-    os.mkdir(fname_tmp)
-
-    for i in [ x for x in range(len(slns)) ]:
-        # real image can have few channels, solution has two
-        sol = slns[i,:].reshape(cellImg.shape[:2])
-        
-        blended_img = np.copy(cellImg)
-        try:
-            blended_img[np.abs(sol) < ls_threshold,0] = 1.
-            
-            blended_img[extract_nucleus(sol),0] = 1.
-            blended_img[extract_cytoplasm(sol),1] = 1.
-        except:
-            blended_img[np.abs(sol) < ls_threshold] = 1.
-            
-            blended_img[extract_nucleus(sol)] = 1.
-        
-        imname=fname_tmp+'_'+str(i)+'.png'
-        sp.misc.imsave(fname_tmp+'/'+imname, blended_img)
+    if save_pictures:
+        save_pics(fname, cellImg, slns)
 
     if make_movie:    
-        ifname = fname_tmp+'/'+fname_tmp + r"_%d.png"
-        ofname = fname_tmp+'/'+fname_tmp + '.mp4'
-        ffmpeg_cmd = 'ffmpeg -qscale 1 -r 6 -i ' + ifname + ' ' + ofname
-        os.system(ffmpeg_cmd)
+        save_vid(fname, cellImg, slns)
+
+
+    
 
 def segment_file(fname, only_final=True):
     """Conducts Level Set Method on given file
@@ -339,8 +318,7 @@ def segment_file(fname, only_final=True):
     Given file's name it opens it and returns final solution
     only_final whether to return only last solution of the whole set
     """
-    afn = os.path.abspath(fname)
-    img = plt.imread(afn)
+    img = open_imfile(afn)
     slns = segment(img)
 
     if only_final:
@@ -369,6 +347,7 @@ def calc_dice(bw1, bw2):
     dice_coeff = 2.*np.sum(np.logical_and(bw1,bw2)) / (np.sum(bw1) + np.sum(bw2))
     return dice_coeff
 
+# Purely testing method
 def calc_dice_cell(file_orig, file_truth):
     """Calculates dice coefficient of two files
             given by name regarding cytoplasm
@@ -379,7 +358,7 @@ def calc_dice_cell(file_orig, file_truth):
     for the whole evolution
     """
     # Ground Truth image with 0 and 1
-    gt = plt.imread(file_truth)
+    gt = open_imfile(file_truth)
     gtcyto = extract_cytoplasm(gt)
     gtnucl = extract_nucleus(gt)
     
