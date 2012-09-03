@@ -12,11 +12,10 @@ import numpy as np
 #import lsmethod.segment as segment
 #import lsmethod.load_file as load_file
 
-def mylog(txt):
-    f = open('dupa.8', 'w+')
-    f.write(txt)
-    f.close()
-
+import logging
+#logger = logging.basicConfig(filename='dupa.8', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def lsmcyto(image, drawable, upsilon, mu, eta, t_f, time_step, mask_size):
     """The actual plugin implementation
@@ -35,7 +34,7 @@ def lsmcyto(image, drawable, upsilon, mu, eta, t_f, time_step, mask_size):
     pr = drawable.get_pixel_rgn(0,0, width, height)
     print np.array(pr[:,:])
 
-    mylog("[!!] layer added")
+    logger.info("[!!] layer added")
 
     #solns = segment(rgn)
     #print "hello"
@@ -45,8 +44,6 @@ def lsmcyto(image, drawable, upsilon, mu, eta, t_f, time_step, mask_size):
     #sel = (np.abs(solns[-1]) < threshold).reshape(w,h)
     #s = gimp.Selection(sel)
     #gimp.set_selection(drawable)
-
-
 
 register(
     "python-fu-lsmcyto",
@@ -72,5 +69,5 @@ register(
     lsmcyto, menu="<Image>/Filters/Python-Fu"
     )
 
-main()
-
+if __name__ == '__main__':
+    main()
