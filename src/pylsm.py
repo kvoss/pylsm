@@ -17,6 +17,8 @@ logging.basicConfig(filename='/home/kvoss/pylsm.log', level=logging.DEBUG)
 def segment_image(timg, tdraw, upsilon, mu, eta, t_f):
     #logging.info(upsilon, mu, eta, t_f)
     #x1, y1, x2, y2 = tdraw.mask_bounds
+    timg.undo_group_start()
+
     pr = tdraw.get_pixel_rgn(0, 0, tdraw.width, tdraw.height, False, False)
     original_img = np.fromstring(pr[:,:], dtype=np.uint8)
     if tdraw.bpp > 1:
@@ -47,7 +49,9 @@ def segment_image(timg, tdraw, upsilon, mu, eta, t_f):
     #logging.info(str(np.shape(chpr)))
     chpr[:,:] = mymask.tostring()
     pdb.gimp_selection_load(ch)
+
     timg.remove_channel(ch)
+    timg.undo_group_end()
     pdb.gimp_displays_flush()
 
     #plt.imshow(mymask)
