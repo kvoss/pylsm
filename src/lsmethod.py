@@ -16,9 +16,6 @@ import ConfigParser
 import logging
 import os
 
-
-from files import *
-
 ##### Importing constants
 config = ConfigParser.ConfigParser()
 config.read('lsmethod.cfg')
@@ -139,6 +136,7 @@ def initialize_distance_fi(img):
     if init_sdf_mthd == 'otsu':
         iimg = img * 255
         iimg = iimg.astype('uint8')
+
         thr = mahotas.otsu(iimg)
         timg = iimg * (iimg < thr)
     
@@ -255,8 +253,6 @@ def simple_solver(f, t0, t, args):
     solns = np.array([t0])
     for tx in t:
         fi += delta_t * f(fi, tx,img,K_img,squared_eliminator)
-        # here we should have information if we should save further
-        # results, otherwise we are just wasting space
         solns = np.vstack((solns,fi))
     return solns
 
@@ -274,14 +270,17 @@ def solve_ode(f, t0, t, args):
 def segment(oimg):
     """ Segment nucleus and cytoplasm from picture
     """
-    log.info("segmenting file: " + fname)
-
     # blending color image
     if len(oimg.shape) == 3:
         img = np.sum(oimg, 2) / oimg.shape[2]
     else:
         img = oimg
-    
+
+    # we need convention - imgs are double [0. - 1.]
+    if np.max(img) > 2: # should be just bigger than 1 but 2 for the sake
+        #uint img
+        img = img / 255.0
+
     fi = initialize_distance_fi(img)
     t0 = np.array(fi).flatten()
 
@@ -296,21 +295,45 @@ def segment(oimg):
     slns = solve_ode(f, t0, t, args=(img,K_img,squared_eliminator))
     return slns
 
+def segment_img(cellImg):
+    slns = segment(cellImg)
+    sol = slns[len(slns)-1,:].reshape(cellImg.shape[:2])
+    return sol
 
+def save_segmentation(fn):
+    abs_fname = os.path.abspath(fn)
+    dn, fname = os.path.split(abs_fname)
+    log.info("segmenting file: " + fname)
 
-def save_segmentation(fname):
-
-    cellImg = open_imfile(fname)
+    cellImg = plt.imread(abs_fname)
     slns = segment(cellImg)
 
-    if save_pictures:
-        save_pics(fname, cellImg, slns)
+    fname_tmp = '_'.join([fname,init_sdf_mthd,'ups'+str(upsilon),'T'+str(t_f),'eta'+str(eta),'eps'+str(epsilon)])
+    os.mkdir(fname_tmp)
+
+    for i in range(len(slns)):
+        # real image can have few channels, solution has two
+        sol = slns[i,:].reshape(cellImg.shape[:2])
+        
+        blended_img = np.copy(cellImg)
+        try:
+            blended_img[np.abs(sol) < ls_threshold,0] = 1.
+            
+            blended_img[extract_nucleus(sol),0] = 1.
+            blended_img[extract_cytoplasm(sol),1] = 1.
+        except:
+            blended_img[np.abs(sol) < ls_threshold] = 1.
+            
+            blended_img[extract_nucleus(sol)] = 1.
+        
+        imname=fname_tmp+'_'+str(i)+'.png'
+        sp.misc.imsave(fname_tmp+'/'+imname, blended_img)
 
     if make_movie:    
-        save_vid(fname, cellImg, slns)
-
-
-    
+        ifname = fname_tmp+'/'+fname_tmp + r"_%d.png"
+        ofname = fname_tmp+'/'+fname_tmp + '.mp4'
+        ffmpeg_cmd = 'ffmpeg -qscale 1 -r 6 -i ' + ifname + ' ' + ofname
+        os.system(ffmpeg_cmd)
 
 def segment_file(fname, only_final=True):
     """Conducts Level Set Method on given file
@@ -318,7 +341,8 @@ def segment_file(fname, only_final=True):
     Given file's name it opens it and returns final solution
     only_final whether to return only last solution of the whole set
     """
-    img = open_imfile(afn)
+    afn = os.path.abspath(fname)
+    img = plt.imread(afn)
     slns = segment(img)
 
     if only_final:
@@ -347,7 +371,6 @@ def calc_dice(bw1, bw2):
     dice_coeff = 2.*np.sum(np.logical_and(bw1,bw2)) / (np.sum(bw1) + np.sum(bw2))
     return dice_coeff
 
-# Purely testing method
 def calc_dice_cell(file_orig, file_truth):
     """Calculates dice coefficient of two files
             given by name regarding cytoplasm
@@ -358,7 +381,7 @@ def calc_dice_cell(file_orig, file_truth):
     for the whole evolution
     """
     # Ground Truth image with 0 and 1
-    gt = open_imfile(file_truth)
+    gt = plt.imread(file_truth)
     gtcyto = extract_cytoplasm(gt)
     gtnucl = extract_nucleus(gt)
     
@@ -407,11 +430,15 @@ def usage():
 def main():
     import sys, getopt
     try:
+        if len(sys.argv) == 1: raise Exception
         opts, args = getopt.getopt(sys.argv[1:], "hpn:s:d:t:T:u:e:r:R:E:i:g:", ["help"])
     except getopt.GetoptError, err:
         print str(err)
         usage()
         sys.exit(2)
+    except Exception:
+        usage()
+        sys.exit(0)
 
     test_only = False
     global n, sigma, delta_t, t_0, t_f, upsilon, eta, R_min, R_max, epsilon, init_sdf_mthd, use_pythode
