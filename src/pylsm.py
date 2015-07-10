@@ -73,9 +73,9 @@ register(
         "python-fu-lsmcyto",
         "Selects cytoplasm",
         "Segment cytoplasm using level set method",
-        "Krzysztof Voss",
-        "Krzysztof Voss",
-        "2011-2012",
+        "K. Voss",
+        "K. Voss",
+        "2011-2015",
         "<Image>/Select/Cytoplams/Level Set Method",
         "RGB*, GRAY*",
         [
