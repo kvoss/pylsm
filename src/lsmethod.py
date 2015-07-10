@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__author__ = 'Krzysztof Voss'
+__author__ = 'K. Voss'
 __version__ = '0.1'
 
 import numpy as np
