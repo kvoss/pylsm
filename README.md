@@ -3,6 +3,10 @@ pylsm
 
 segmentation algorithm based on the level set method
 
+![cell](presentation/02_rc3_otsu_ups0.15_Tf10.0.gif)
+![bone cells](presentation/06_bones_otsu.gif)
+![south america at night](presentation/sa-at-night.gif)
+
 The algorithm implements the level set method described in:
 
 A new level set model for cell image segmentation  
